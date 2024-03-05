@@ -184,8 +184,10 @@ fn handle_input_event() -> char {
                     KeyCode::Backspace => chr = 0x8 as char,
                     KeyCode::Enter => chr = '\n',
                     KeyCode::Char(c) => {
-                        if event.modifiers == KeyModifiers::CONTROL && (c == 'C' || c == 'c') {
-                            chr = 0x1b as char;
+                        if event.modifiers == KeyModifiers::CONTROL {
+                            if c == 'C' || c == 'c' {
+                                chr = 0x1b as char;
+                            }
                         } else {
                             chr = c
                         }
