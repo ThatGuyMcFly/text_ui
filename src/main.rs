@@ -11,6 +11,11 @@ const STRING_ARRAY_LENGTH: usize = 10;
 const DIVIDER: &str = "-----------------------------------------";
 const TITLE: &str = "Welcome to Rust Text UI Example";
 
+const BACKSPACE: char = 0x8 as char;
+const ESC: char = 0x1b as char;
+const NULL: char = '\0';
+const CR: char = '\n';
+
 const EMPTY_STRING: String = String::new();
 
 /**
@@ -175,24 +180,24 @@ fn refresh_ui(user_inputs: &[String; STRING_ARRAY_LENGTH], user_input: &String) 
 fn handle_input_event() -> char {
     crossterm::terminal::enable_raw_mode().expect("Failed to enable raw mode");
 
-    let mut chr: char = '\0';
+    let mut chr: char = NULL;
 
     if poll(Duration::from_millis(50)).expect("Failed to poll for results") {
         if let Ok(event) = read() {
             match event {
                 Event::Key(event) => match event.code {
-                    KeyCode::Backspace => chr = 0x8 as char,
+                    KeyCode::Backspace => chr = BACKSPACE,
                     KeyCode::Enter => chr = '\n',
                     KeyCode::Char(c) => {
                         if event.modifiers == KeyModifiers::CONTROL {
                             if c == 'C' || c == 'c' {
-                                chr = 0x1b as char;
+                                chr = ESC;
                             }
                         } else {
                             chr = c
                         }
                     }
-                    KeyCode::Esc => chr = 0x1b as char,
+                    KeyCode::Esc => chr = ESC,
                     _ => {}
                 },
                 _ => {}
@@ -215,8 +220,8 @@ fn main() {
 
     loop {
         let input = handle_input_event();
-        if input != '\0' {
-            if input == '\n' {
+        if input != NULL {
+            if input == CR {
                 stdout().execute(cursor::MoveToColumn(0)).expect("msg");
 
                 if user_input == "/clear" {
@@ -226,7 +231,7 @@ fn main() {
                 }
 
                 user_input.clear();
-            } else if input == 0x1b as char {
+            } else if input == ESC {
                 execute!(
                     stdout(),
                     terminal::Clear(terminal::ClearType::All),
@@ -234,7 +239,7 @@ fn main() {
                 )
                 .expect("msg");
                 break;
-            } else if input == 0x8 as char {
+            } else if input == BACKSPACE {
                 user_input.pop();
             } else {
                 stdout().execute(cursor::MoveRight(2)).expect("msg");
