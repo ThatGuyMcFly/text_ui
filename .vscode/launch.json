@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'text_ui'",
+            "name": "Debug executable 'text_ui_main'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=text_ui",
-                    "--package=text_ui"
+                    "--bin=text_ui_main",
+                    "--package=text_ui_main"
                 ],
                 "filter": {
-                    "name": "text_ui",
+                    "name": "text_ui_main",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'text_ui'",
+            "name": "Debug unit tests in executable 'text_ui_main'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=text_ui",
-                    "--package=text_ui"
+                    "--bin=text_ui_main",
+                    "--package=text_ui_main"
                 ],
                 "filter": {
-                    "name": "text_ui",
+                    "name": "text_ui_main",
                     "kind": "bin"
                 }
             },
