@@ -14,6 +14,8 @@ fn _empty_function(_ch: char) {}
 
 impl Input {
     pub fn new(width: usize, sender: Sender<String>) -> Input {
+        crossterm::terminal::enable_raw_mode().expect("Failed to enable raw mode");
+
         Input {
             input: String::new(),
             width,
@@ -32,8 +34,6 @@ impl Input {
 }
 
 fn handle_input_event() -> char {
-    crossterm::terminal::enable_raw_mode().expect("Failed to enable raw mode");
-
     let mut chr: char = constants::NULL;
 
     if poll(Duration::from_millis(50)).expect("Failed to poll for results") {
@@ -58,8 +58,6 @@ fn handle_input_event() -> char {
             }
         }
     }
-
-    crossterm::terminal::disable_raw_mode().expect("Failed to disable raw mode");
 
     chr
 }

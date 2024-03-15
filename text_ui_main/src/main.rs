@@ -1,7 +1,6 @@
 use std::io::{stdout, Write};
 
 use crossbeam::channel::{self, unbounded};
-use crossterm::{cursor, execute};
 use text_ui_lib::ui_input::constants;
 
 struct UserInput {
@@ -29,9 +28,6 @@ fn main() {
                 print!("{}", data);
                 stdout().flush().expect("Couldn't flush");
                 if data == constants::CR.to_string() {
-                    execute!(stdout(), cursor::MoveToColumn(0)).expect("msg");
-                    println!("input: {}", user_input.input);
-                    execute!(stdout(), cursor::MoveToColumn(0)).expect("msg");
                     user_input.sender.send(user_input.input).unwrap();
                     user_input.input = String::new();
                 } else if data == constants::ESC.to_string() {

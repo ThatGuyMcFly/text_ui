@@ -25,6 +25,7 @@ impl Display {
     }
 
     pub fn add_data(&mut self, new_data: &str) {
+        println!("Added to Display: {}", new_data);
         self.data.push(new_data.to_string());
         if self.stick_to_bottom {
             if self.data.len() > self.display_height {
