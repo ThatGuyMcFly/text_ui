@@ -1,5 +1,3 @@
-use std::io::{stdout, Write};
-
 use crossbeam::channel::{self, unbounded};
 use text_ui_lib::ui_input::constants;
 
@@ -25,13 +23,14 @@ fn main() {
 
         match received_data {
             Ok(data) => {
-                print!("{}", data);
-                stdout().flush().expect("Couldn't flush");
                 if data == constants::CR.to_string() {
                     user_input.sender.send(user_input.input).unwrap();
                     user_input.input = String::new();
                 } else if data == constants::ESC.to_string() {
+                    text_ui_lib::close_ui();
                     break;
+                } else if data == constants::BACKSPACE.to_string() {
+                    user_input.input.pop();
                 } else {
                     user_input.input += &data;
                 }

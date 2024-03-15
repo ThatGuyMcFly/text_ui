@@ -1,7 +1,9 @@
-use std::time::Duration;
+use std::io::stdout;
 
 use crossbeam::channel::Receiver;
-use crossterm::event::poll;
+use crossterm::{cursor, execute};
+
+use crate::ui_input::constants::{CR, NULL};
 
 pub struct Display {
     data: Vec<String>,
@@ -25,13 +27,12 @@ impl Display {
     }
 
     pub fn add_data(&mut self, new_data: &str) {
-        println!("Added to Display: {}", new_data);
         self.data.push(new_data.to_string());
         if self.stick_to_bottom {
             if self.data.len() > self.display_height {
                 self.view_window.0 += 1;
+                self.view_window.1 += 1;
             }
-            self.view_window.1 += 1;
         }
     }
 
@@ -56,5 +57,45 @@ impl Display {
             Ok(data) => self.add_data(&data),
             Err(_) => {}
         }
+    }
+
+    fn draw_line(&self, line: &str) {
+        execute!(stdout(), cursor::MoveToColumn(0)).expect("msg");
+        print!("| ");
+
+        let mut count = 2;
+
+        for chr in line.chars() {
+            if chr != NULL && chr != CR {
+                print!("{}", chr);
+                count += 1;
+            }
+
+            if count == self.display_width - 5 && line.len() > self.display_width - 4 {
+                print!("...");
+                count += 3;
+
+                break;
+            }
+        }
+
+        let trailing_spaces = " ".repeat(self.display_width - 1 - count);
+
+        println!("{}|", trailing_spaces);
+    }
+
+    pub fn draw(&self) {
+        for index in self.view_window.0..self.view_window.1 {
+            let datum = self.data.get(index);
+
+            match datum {
+                Some(value) => self.draw_line(&value),
+                None => self.draw_line(" "),
+            }
+        }
+    }
+
+    pub fn get_height(&self) -> usize {
+        self.display_height
     }
 }

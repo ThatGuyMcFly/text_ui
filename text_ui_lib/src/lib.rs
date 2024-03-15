@@ -11,7 +11,7 @@ use self::{ui_display::Display, ui_input::Input};
 const PIXELS_PER_CHARACTER_WIDTH: usize = 10;
 const PIXELS_PER_CHARACTER_HEIGHT: usize = 15;
 const DIVIDER_CHARACTER: char = '-';
-const EDGE_CHARACTER: char = '|';
+// const EDGE_CHARACTER: char = '|';
 
 pub struct Ui {
     title: String,
@@ -34,7 +34,7 @@ impl Ui {
         Self {
             title: String::from(title),
             width: character_width,
-            display: Display::new(character_height, character_width, receiver),
+            display: Display::new(10, character_width, receiver),
             input: Input::new(character_width, sender),
         }
     }
@@ -42,8 +42,9 @@ impl Ui {
     fn draw_divider(&self) {
         let divider = DIVIDER_CHARACTER.to_string().repeat(self.width);
 
-        println!("{}", divider);
         execute!(stdout(), cursor::MoveToColumn(0)).unwrap();
+
+        println!("{}", divider);
     }
 
     fn draw_title(&self) {
@@ -58,11 +59,11 @@ impl Ui {
         execute!(stdout(), cursor::MoveToColumn(0)).unwrap();
     }
 
-    fn draw_display(&self) {}
-
-    fn draw_input(&self) {}
-
-    fn reset_cursor(&self) {}
+    fn reset_cursor(&self) {
+        let row: u16 = self.display.get_height().try_into().unwrap();
+        execute!(stdout(), cursor::MoveToRow(row + 4)).expect("msg");
+        self.input.set_cursor_column();
+    }
 
     fn draw_ui(&self) {
         execute!(
@@ -72,20 +73,20 @@ impl Ui {
         )
         .expect("Failed to set up terminal");
 
-        // self.draw_title();
-        // self.draw_divider();
-        // self.draw_display();
-        // self.draw_divider();
-        // self.draw_input();
-        // self.draw_divider();
-        // self.reset_cursor();
+        self.draw_title();
+        self.draw_divider();
+        self.display.draw();
+        self.draw_divider();
+        self.input.draw();
+        self.draw_divider();
+        self.reset_cursor();
     }
 
     pub fn run_ui(&mut self) {
-        self.draw_ui();
         loop {
             self.display.update_display();
             self.input.update_input();
+            self.draw_ui();
         }
     }
 }
@@ -104,4 +105,15 @@ pub fn init_ui(
     });
 
     ui_receiver
+}
+
+pub fn close_ui() {
+    Input::end();
+
+    execute!(
+        stdout(),
+        terminal::Clear(terminal::ClearType::All),
+        cursor::MoveTo(0, 0)
+    )
+    .expect("Failed to set up terminal");
 }
