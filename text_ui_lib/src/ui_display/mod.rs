@@ -26,7 +26,6 @@ impl Display {
 
     pub fn add_data(&mut self, new_data: &str) {
         self.data.push(new_data.to_string());
-        // println!("{}", self.data.get(0).unwrap());
         if self.stick_to_bottom {
             if self.data.len() > self.display_height {
                 self.view_window.0 += 1;
@@ -51,8 +50,11 @@ impl Display {
 
     pub fn update_display(&mut self) {
         if poll(Duration::from_millis(50)).expect("msg") {
-            if let Ok(received_message) = self.receiver.recv() {
-                self.add_data(&received_message);
+            let received_data = self.receiver.recv();
+
+            match received_data {
+                Ok(data) => self.add_data(&data),
+                Err(_) => {}
             }
         };
     }

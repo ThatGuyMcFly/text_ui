@@ -1,6 +1,6 @@
-use std::io::stdout;
+use std::{io::stdout, thread};
 
-use crossbeam::channel::{Receiver, Sender};
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use crossterm::{cursor, execute, terminal};
 
 pub mod ui_display;
@@ -16,8 +16,8 @@ const EDGE_CHARACTER: char = '|';
 pub struct Ui {
     title: String,
     width: usize,
-    pub display: Display,
-    pub input: Input,
+    display: Display,
+    input: Input,
 }
 
 impl Ui {
@@ -25,13 +25,13 @@ impl Ui {
         title: &str,
         height: usize,
         width: usize,
-        sender: Sender<String>,
         receiver: Receiver<String>,
-    ) -> Ui {
+        sender: Sender<String>,
+    ) -> Self {
         let character_height = height / PIXELS_PER_CHARACTER_HEIGHT;
         let character_width = width / PIXELS_PER_CHARACTER_WIDTH;
 
-        Ui {
+        Self {
             title: String::from(title),
             width: character_width,
             display: Display::new(character_height, character_width, receiver),
@@ -72,13 +72,13 @@ impl Ui {
         )
         .expect("Failed to set up terminal");
 
-        self.draw_title();
-        self.draw_divider();
-        self.draw_display();
-        self.draw_divider();
-        self.draw_input();
-        self.draw_divider();
-        self.reset_cursor();
+        // self.draw_title();
+        // self.draw_divider();
+        // self.draw_display();
+        // self.draw_divider();
+        // self.draw_input();
+        // self.draw_divider();
+        // self.reset_cursor();
     }
 
     pub fn run_ui(&mut self) {
@@ -88,4 +88,20 @@ impl Ui {
             self.input.update_input();
         }
     }
+}
+
+pub fn init_ui(
+    title: String,
+    width: usize,
+    height: usize,
+    receiver: Receiver<String>,
+) -> Receiver<String> {
+    let (ui_sender, ui_receiver) = unbounded();
+
+    thread::spawn(move || {
+        let mut ui = Ui::new(&title, height, width, receiver, ui_sender);
+        ui.run_ui();
+    });
+
+    ui_receiver
 }

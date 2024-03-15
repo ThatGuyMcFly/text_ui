@@ -1,4 +1,3 @@
-
 use crossbeam::channel::Sender;
 use crossterm::event::{poll, read, Event, KeyCode, KeyModifiers};
 use std::{char, time::Duration};
@@ -22,10 +21,6 @@ impl Input {
         }
     }
 
-    // fn add_input(&mut self, ch: char) {
-    //     self.input.push(ch);
-    // }
-
     pub fn update_input(&mut self) {
         let user_input = handle_input_event();
 
@@ -36,13 +31,6 @@ impl Input {
     }
 }
 
-/**
- * Handles keyboard input
- *
- * @return
- *      char - the character input from from the keyboard
- *             returns '/0' if no input was recevied from the user
- */
 fn handle_input_event() -> char {
     crossterm::terminal::enable_raw_mode().expect("Failed to enable raw mode");
 
