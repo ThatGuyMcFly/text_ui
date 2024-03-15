@@ -50,13 +50,11 @@ impl Display {
     }
 
     pub fn update_display(&mut self) {
-        if poll(Duration::from_millis(50)).expect("msg") {
-            let received_data = self.receiver.recv();
+        let received_data = self.receiver.try_recv();
 
-            match received_data {
-                Ok(data) => self.add_data(&data),
-                Err(_) => {}
-            }
-        };
+        match received_data {
+            Ok(data) => self.add_data(&data),
+            Err(_) => {}
+        }
     }
 }

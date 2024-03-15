@@ -21,7 +21,7 @@ fn main() {
     };
 
     loop {
-        let received_data = user_input.receiver.recv();
+        let received_data = user_input.receiver.try_recv();
 
         match received_data {
             Ok(data) => {
