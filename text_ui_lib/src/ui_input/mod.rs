@@ -1,7 +1,7 @@
 use crossbeam::channel::Sender;
 use crossterm::{
     cursor,
-    event::{poll, read, EnableMouseCapture, Event, KeyCode},
+    event::{poll, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers},
     execute,
 };
 use std::{io::stdout, time::Duration};
@@ -50,8 +50,14 @@ impl Input {
                 self.sender.send(constants::ESC.to_string()).unwrap();
             }
             KeyCode::Char(chr) => {
-                self.sender.send(chr.to_string()).unwrap();
-                self.input.push(chr);
+                if key_event.modifiers == KeyModifiers::CONTROL && (chr == 'c' || chr == 'C') {
+                    self.quit_input = true;
+                    execute!(stdout(), DisableMouseCapture).expect("msg");
+                    self.sender.send(constants::ESC.to_string()).unwrap();
+                } else {
+                    self.sender.send(chr.to_string()).unwrap();
+                    self.input.push(chr);
+                }
             }
             _ => {}
         }

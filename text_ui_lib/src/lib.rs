@@ -6,7 +6,6 @@ use ui_input::EventType;
 
 pub mod ui_display;
 pub mod ui_input;
-pub mod ui_scrollbar;
 
 use self::{ui_display::Display, ui_input::Input};
 
