@@ -1,27 +1,32 @@
 use crossbeam::channel::Sender;
 use crossterm::{
     cursor,
-    event::{poll, read, Event, KeyCode, KeyModifiers},
+    event::{poll, read, EnableMouseCapture, Event, KeyCode},
     execute,
 };
-use std::{char, io::stdout, time::Duration};
+use std::{io::stdout, time::Duration};
 pub mod constants;
 
 pub struct Input {
     input: String,
     width: usize,
+    quit_input: bool,
     sender: Sender<String>,
 }
 
-fn _empty_function(_ch: char) {}
+pub enum EventType {
+    Key(crossterm::event::KeyEvent),
+    Scroll(crossterm::event::MouseEvent),
+}
 
 impl Input {
     pub fn new(width: usize, sender: Sender<String>) -> Input {
         crossterm::terminal::enable_raw_mode().expect("Failed to enable raw mode");
-
-        Input {
+        execute!(stdout(), EnableMouseCapture).expect("msg");
+        Self {
             input: String::new(),
             width,
+            quit_input: false,
             sender,
         }
     }
@@ -30,27 +35,42 @@ impl Input {
         crossterm::terminal::disable_raw_mode().expect("Failed to enable raw mode");
     }
 
-    pub fn update_input(&mut self) {
-        let user_input = handle_input_event();
-
-        match user_input {
-            constants::CR => {
-                self.sender.send(user_input.to_string()).unwrap();
-                self.input = String::new();
-            }
-            constants::BACKSPACE => {
-                self.sender.send(user_input.to_string()).unwrap();
+    fn update_input(&mut self, key_event: crossterm::event::KeyEvent) {
+        match key_event.code {
+            KeyCode::Backspace => {
+                self.sender.send(constants::BACKSPACE.to_string()).unwrap();
                 self.input.pop();
             }
-            constants::ESC => {
-                self.sender.send(user_input.to_string()).unwrap();
+            KeyCode::Enter => {
+                self.sender.send(constants::CR.to_string()).unwrap();
+                self.input = String::new();
             }
-            constants::NULL => {}
-            _ => {
-                self.sender.send(user_input.to_string()).unwrap();
-                self.input.push(user_input);
+            KeyCode::Esc => {
+                self.quit_input = true;
+                self.sender.send(constants::ESC.to_string()).unwrap();
             }
+            KeyCode::Char(chr) => {
+                self.sender.send(chr.to_string()).unwrap();
+                self.input.push(chr);
+            }
+            _ => {}
         }
+    }
+
+    pub fn get_input(&mut self) -> Option<EventType> {
+        let user_input_event = handle_input_event();
+
+        match user_input_event {
+            Some(ref user_input) => match user_input {
+                EventType::Key(key_event) => {
+                    self.update_input(*key_event);
+                }
+                EventType::Scroll(_scroll_event) => {}
+            },
+            None => {}
+        }
+
+        user_input_event
     }
 
     fn draw_line(&self, line: &str) {
@@ -87,33 +107,22 @@ impl Input {
         self.draw_line("Input");
         self.draw_line(&self.input);
     }
+
+    pub fn get_quit_input(&self) -> bool {
+        self.quit_input
+    }
 }
 
-fn handle_input_event() -> char {
-    let mut chr: char = constants::NULL;
-
+fn handle_input_event() -> Option<EventType> {
     if poll(Duration::from_millis(50)).expect("Failed to poll for results") {
         if let Ok(event) = read() {
             match event {
-                Event::Key(event) => match event.code {
-                    KeyCode::Backspace => chr = constants::BACKSPACE,
-                    KeyCode::Enter => chr = constants::CR,
-                    KeyCode::Char(c) => {
-                        if event.modifiers == KeyModifiers::CONTROL {
-                            if c == 'C' || c == 'c' {
-                                chr = constants::ESC;
-                            }
-                        } else {
-                            chr = c
-                        }
-                    }
-                    KeyCode::Esc => chr = constants::ESC,
-                    _ => {}
-                },
+                Event::Key(event) => return Some(EventType::Key(event)),
+                Event::Mouse(event) => return Some(EventType::Scroll(event)),
                 _ => {}
             }
         }
     }
 
-    chr
+    None
 }

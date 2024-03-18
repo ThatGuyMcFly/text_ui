@@ -1,17 +1,19 @@
 use std::{io::stdout, thread};
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
-use crossterm::{cursor, execute, terminal};
+use crossterm::{cursor, event::MouseEventKind, execute, terminal};
+use ui_input::EventType;
 
 pub mod ui_display;
 pub mod ui_input;
+pub mod ui_scrollbar;
 
 use self::{ui_display::Display, ui_input::Input};
 
 const PIXELS_PER_CHARACTER_WIDTH: usize = 10;
 const PIXELS_PER_CHARACTER_HEIGHT: usize = 15;
 const DIVIDER_CHARACTER: char = '-';
-// const EDGE_CHARACTER: char = '|';
+const DISPLAY_START_ROW: usize = 2;
 
 pub struct Ui {
     title: String,
@@ -28,7 +30,7 @@ impl Ui {
         receiver: Receiver<String>,
         sender: Sender<String>,
     ) -> Self {
-        let character_height = height / PIXELS_PER_CHARACTER_HEIGHT;
+        let _character_height = height / PIXELS_PER_CHARACTER_HEIGHT;
         let character_width = width / PIXELS_PER_CHARACTER_WIDTH;
 
         Self {
@@ -82,11 +84,58 @@ impl Ui {
         self.reset_cursor();
     }
 
+    fn within_display(&self, col: usize, row: usize) -> bool {
+        let within_width = col <= self.display.get_width();
+        let within_height =
+            row >= DISPLAY_START_ROW && row <= self.display.get_height() + DISPLAY_START_ROW;
+
+        return within_height && within_width;
+    }
+
+    fn handle_scroll_event(&mut self, scroll_event: crossterm::event::MouseEvent) {
+        // let scroll_event_result = self.scrollbar_receiver.try_recv();
+
+        match scroll_event.kind {
+            MouseEventKind::ScrollDown => {
+                if self.within_display(
+                    scroll_event.column.try_into().unwrap(),
+                    scroll_event.row.try_into().unwrap(),
+                ) {
+                    self.display.shift_view_window("down", 1);
+                }
+            }
+            MouseEventKind::ScrollUp => {
+                if self.within_display(
+                    scroll_event.column.try_into().unwrap(),
+                    scroll_event.row.try_into().unwrap(),
+                ) {
+                    self.display.shift_view_window("up", 1);
+                }
+            }
+            _ => {}
+        }
+    }
+
     pub fn run_ui(&mut self) {
         loop {
             self.display.update_display();
-            self.input.update_input();
+            let ui_event_option = self.input.get_input();
+
+            match ui_event_option {
+                Some(ui_event) => match ui_event {
+                    EventType::Scroll(scroll_event) => {
+                        self.handle_scroll_event(scroll_event);
+                    }
+                    _ => {}
+                },
+                None => {}
+            }
+
             self.draw_ui();
+
+            if self.input.get_quit_input() {
+                break;
+            }
         }
     }
 }

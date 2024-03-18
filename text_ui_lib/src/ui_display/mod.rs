@@ -39,12 +39,22 @@ impl Display {
     pub fn shift_view_window(&mut self, direction: &str, amount: usize) {
         match direction {
             "up" => {
-                self.view_window.0 -= amount;
-                self.view_window.1 -= amount;
+                if self.view_window.0 != 0 {
+                    self.view_window.0 -= amount;
+                    self.view_window.1 -= amount;
+                }
+
+                self.stick_to_bottom = false;
             }
             "down" => {
-                self.view_window.0 += amount;
-                self.view_window.1 += amount;
+                if self.view_window.1 == self.data.len() {
+                    self.stick_to_bottom = true;
+                } else if self.view_window.1 != self.data.len()
+                    && self.data.len() > self.display_height
+                {
+                    self.view_window.0 += amount;
+                    self.view_window.1 += amount;
+                }
             }
             _ => {}
         }
@@ -97,5 +107,9 @@ impl Display {
 
     pub fn get_height(&self) -> usize {
         self.display_height
+    }
+
+    pub fn get_width(&self) -> usize {
+        self.display_width
     }
 }
