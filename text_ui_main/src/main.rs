@@ -1,10 +1,9 @@
 use crossbeam::channel::{self, unbounded};
-use text_ui_lib::ui_input::constants;
-
+use text_ui_lib::constants;
 struct UserInput {
     input: String,
     sender: channel::Sender<String>,
-    receiver: channel::Receiver<String>,
+    receiver: channel::Receiver<char>,
 }
 
 fn main() {
@@ -23,16 +22,16 @@ fn main() {
 
         match received_data {
             Ok(data) => {
-                if data == constants::CR.to_string() {
+                if data == constants::CR {
                     user_input.sender.send(user_input.input).unwrap();
                     user_input.input = String::new();
-                } else if data == constants::ESC.to_string() {
+                } else if data == constants::ESC {
                     text_ui_lib::close_ui();
                     break;
-                } else if data == constants::BACKSPACE.to_string() {
+                } else if data == constants::BACKSPACE {
                     user_input.input.pop();
                 } else {
-                    user_input.input += &data;
+                    user_input.input.push(data);
                 }
             }
             Err(_) => {}

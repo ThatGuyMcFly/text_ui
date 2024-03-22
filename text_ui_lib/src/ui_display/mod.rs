@@ -3,7 +3,7 @@ use std::io::stdout;
 use crossbeam::channel::Receiver;
 use crossterm::{cursor, execute};
 
-use crate::ui_input::constants::{CR, NULL};
+use crate::constants::{CR, NULL};
 
 pub struct Display {
     data: Vec<String>,
